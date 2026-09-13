@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7f1d1d">
+<title>緊急派送</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237f1d1d'/%3E%3Cpath d='M16 8v10' stroke='%23fff' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='23' r='2' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f1f5f9; --card:#fff; --ink:#0f172a; --ink-2:#475569; --ink-3:#94a3b8;
+  --line:#e2e8f0; --brand:#2563eb; --brand-d:#1d4ed8;
+  --red:#b91c1c; --red-d:#7f1d1d; --red-bg:#fef2f2; --red-line:#fecaca;
+  --full:#d97706; --ok:#059669;
+  --warn:#b45309; --warn-bg:#fffbeb; --warn-line:#fde68a;
+  --pad: env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+a{color:inherit}
+.hide{display:none !important}
+
+.topbar{
+  position:sticky; top:0; z-index:50; background:var(--red-d); color:#fff;
+  padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;
+  display:flex; align-items:center; gap:10px;
+}
+.topbar h1{font-size:15px;font-weight:800;margin:0;flex:1}
+.topbar .sub{font-size:11px;color:#fca5a5;font-weight:500}
+.iconbtn{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.14);flex:none}
+.iconbtn svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+.wrap{padding:14px 14px calc(148px + var(--pad));max-width:640px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px}
+.tiny{font-size:11px}
+.muted{color:var(--ink-2)}
+
+
+/* 等待計時 */
+.hero{
+  padding:16px;margin-bottom:12px;border-radius:18px;color:#fff;
+  background:linear-gradient(165deg,#991b1b,#450a0a);
+}
+.hero .lbl{font-size:11px;font-weight:800;color:#fca5a5;letter-spacing:.04em}
+.hero .big{font-size:44px;font-weight:900;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums;margin-top:2px}
+.hero .big small{font-size:17px;font-weight:800;margin-left:5px}
+.hero .cap{font-size:12px;color:#fecaca;margin-top:7px;line-height:1.5}
+.hero-split{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:14px;padding-top:13px;border-top:1px solid rgba(255,255,255,.18)}
+.hero-split div b{display:block;font-size:19px;font-weight:900;font-variant-numeric:tabular-nums;line-height:1.2}
+.hero-split div span{font-size:10px;color:#fecaca;font-weight:700}
+
+.sec-h{font-size:13px;font-weight:900;margin:16px 4px 9px;display:flex;align-items:baseline;gap:8px}
+.sec-h .n{font-weight:700;color:var(--ink-3);font-size:11px}
+
+/* 為何升級 */
+.why{padding:14px;margin-bottom:12px;background:var(--red-bg);border:1px solid var(--red-line);border-radius:16px}
+.why h3{margin:0 0 6px;font-size:12px;font-weight:900;color:var(--red)}
+.why p{margin:0;font-size:12.5px;color:#7f1d1d;line-height:1.6}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.tag{font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;border:1px solid}
+.tag.peak{background:#fffbeb;border-color:var(--warn-line);color:var(--warn)}
+.tag.hot{background:#eff6ff;border-color:#bfdbfe;color:var(--brand-d)}
+.tag.wait{background:#fff;border-color:var(--red-line);color:var(--red)}
+
+/* 首要站 */
+.crit{padding:14px;margin-bottom:12px}
+.crit .k{font-size:10.5px;font-weight:800;color:var(--ink-3)}
+.crit .nm{font-size:18px;font-weight:900;margin-top:2px;letter-spacing:-.01em}
+.crit .st{font-size:12px;font-weight:700;margin-top:4px}
+.crit .bar{height:8px;border-radius:5px;background:#e2e8f0;margin-top:10px;overflow:hidden}
+.crit .bar i{display:block;height:100%;border-radius:5px}
+
+/* 路線 */
+.route{padding:13px;margin-bottom:12px}
+.rnode{display:flex;gap:10px;align-items:flex-start;padding:8px 0}
+.rnode+.rnode{border-top:1px dashed var(--line)}
+.mk{width:24px;height:24px;border-radius:8px;color:#fff;font-size:11.5px;font-weight:900;display:flex;align-items:center;justify-content:center;flex:none}
+.rnode .nm{font-size:13.5px;font-weight:800;line-height:1.35}
+.rnode .sub{font-size:11px;color:var(--ink-2);margin-top:1px}
+.rnode .mv{margin-left:auto;font-size:12.5px;font-weight:900;white-space:nowrap;font-variant-numeric:tabular-nums}
+.route .foot{margin-top:9px;padding-top:9px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink-2);display:flex;align-items:center;gap:8px}
+.route .foot button{margin-left:auto;font-size:11.5px;font-weight:800;color:var(--brand-d)}
+
+/* AI 說明 */
+.ai{padding:14px;margin-bottom:12px}
+.ai h3{margin:0 0 5px;font-size:11px;font-weight:900;color:var(--ink-3)}
+.ai p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.65}
+
+/* 底部操作列 */
+.actions{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(255,255,255,.96);
+  backdrop-filter:blur(8px);border-top:1px solid var(--line);
+  padding:10px 14px calc(10px + var(--pad));
+}
+.actions .inner{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.btn{display:block;width:100%;text-align:center;border-radius:13px;font-weight:900;padding:14px;font-size:15.5px}
+.btn-accept{background:var(--red);color:#fff}
+.btn-accept:active{background:var(--red-d)}
+.btn-open{background:var(--brand);color:#fff}
+.btn-ghost{background:#f1f5f9;color:var(--ink-2);font-size:13px;padding:11px;font-weight:800}
+.btn[disabled]{opacity:.45}
+
+/* 狀態區塊 */
+.state{padding:22px 16px;text-align:center;border-radius:16px;background:#fff;border:1px solid var(--line);margin-bottom:12px}
+.state .ico{font-size:30px;line-height:1}
+.state h3{margin:9px 0 4px;font-size:15px;font-weight:900}
+.state p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.6}
+
+/* 其他待接單 */
+.qrow{display:flex;align-items:center;gap:10px;padding:11px 13px;border-bottom:1px solid var(--line);width:100%;text-align:left}
+.qrow:last-child{border-bottom:0}
+.qrow .nm{font-size:13px;font-weight:800}
+.qrow .sub{font-size:11px;color:var(--ink-2);margin-top:1px}
+.qrow .w{margin-left:auto;font-size:13px;font-weight:900;color:var(--red);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.foot-note{font-size:10.5px;color:var(--ink-3);line-height:1.6;margin:14px 4px 0}
+
+#toast{
+  position:fixed;left:50%;bottom:calc(96px + var(--pad));transform:translate(-50%,12px);
+  background:#0f172a;color:#fff;font-size:13px;font-weight:700;padding:11px 17px;border-radius:11px;
+  opacity:0;pointer-events:none;transition:.22s;z-index:90;max-width:82vw;text-align:center;
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="iconbtn" onclick="goList()" aria-label="全部任務">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+  </button>
+  <div style="flex:1;min-width:0">
+    <h1 id="top-title">緊急派送</h1>
+    <div class="sub" id="top-sub">載入中…</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="content"></div>
+  <div class="foot-note" id="foot-note"></div>
+</div>
+
+<div class="actions hide" id="actions"><div class="inner" id="actions-inner"></div></div>
+<div id="toast"></div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="tasks.js"></script>
+<script>
+/* ============================================================================
+   緊急派送頁 —— 與 index.html 分開的理由
+   --------------------------------------------------------------------------
+   一般任務頁是「挑一筆來做」，這一頁是「這筆沒人接，現在要不要接」。
+   兩者的閱讀順序完全不同：這頁先講已經等多久、為什麼輪到你，
+   確認的動作只有一個，而且不載入地圖圖磚——緊急情境下多一個外部相依就多一個失敗點。
+   接單成功後才跳到 index.html 執行任務，狀態共用同一份 localStorage。
+   ============================================================================ */
+const CONFIG = {
+  liffId:  '',   // 由後端 serveLiffPage 注入；靜態託管時手動填
+  apiBase: '',   // 同上。留空＝不打後端，操作只存在本機
+};
+
+let DATA = null;
+let profile = { displayName: '調度員', userId: 'demo-user' };
+let inClient = false;
+let task = null;
+let info = null;          // { waitedMin, peak, hot, eligible } 來自 /unclaimed
+let thresholds = { unclaimedMinutes: 10, flowPerHourThreshold: 6 };
+let waitBase = null;      // 開始等待的時間戳，用來讓分鐘數自己往前走
+let progress = {};
+let busy = false;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const qs = k => new URLSearchParams(location.search).get(k);
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+
+/* ============================================================================
+   啟動
+   ============================================================================ */
+(async function boot() {
+  progress = store.get('yb_progress', {});
+
+  try {
+    DATA = window.__TASKS__ || await (await fetch('tasks.json', { cache: 'no-store' })).json();
+  } catch (e) {
+    $('content').innerHTML = state('📦', '找不到 tasks.json', '請確認它和 urgent.html 放在同一層。');
+    $('top-sub').textContent = '資料載入失敗';
+    return;
+  }
+
+  // 連線狀態只寫進 console，不在畫面上掛橫幅
+  const backendNote = () => CONFIG.apiBase ? '後端已連線' : '後端未設定，接單只存在本機';
+  if (CONFIG.liffId && window.liff) {
+    try {
+      await liff.init({ liffId: CONFIG.liffId });
+      inClient = liff.isInClient();
+      if (liff.isLoggedIn()) {
+        const p = await liff.getProfile();
+        profile = { displayName: p.displayName, userId: p.userId };
+      } else if (!inClient) { liff.login(); return; }
+    } catch (e) {
+      console.warn('LINE 身分驗證失敗：' + e.message + '｜' + backendNote());
+    }
+  } else if (CONFIG.liffId) {
+    console.warn('LINE SDK 未載入（可能被網路阻擋）｜' + backendNote());
+  } else {
+    console.warn('未設定 LIFF ID，未連結 LINE 身分｜' + backendNote());
+  }
+
+  // 卡片按鈕帶 ?taskId=Txxx 進來。liff.state 是 LIFF 轉址時的備援來源。
+  const wanted = qs('taskId')
+    || (window.liff && liff.state ? new URLSearchParams(liff.state.replace(/^.*\?/, '')).get('taskId') : null);
+
+  await loadUnclaimed();
+
+  task = wanted ? DATA.tasks.find(t => t.taskId === wanted) : null;
+  if (!task) { renderQueue(); return; }
+  applyInfo();
+  render();
+  setInterval(tickWait, 30000);
+})();
+
+/** 等待時間、尖峰與高轉換的判定一律以後端為準，後端不在才本機推算 */
+async function loadUnclaimed() {
+  if (!CONFIG.apiBase) return;
+  try {
+    const r = await fetch(CONFIG.apiBase.replace(/\/+$/, '') + '/unclaimed');
+    if (!r.ok) return;
+    const d = await r.json();
+    thresholds = {
+      unclaimedMinutes: d.unclaimedMinutes ?? 10,
+      flowPerHourThreshold: d.flowPerHourThreshold ?? 6,
+    };
+    window.__UNCLAIMED__ = d.items || [];
+    window.__QUEUE_META__ = { pushedTotal: d.pushedTotal, takenTotal: d.takenTotal, taskTotal: d.taskTotal, dispatcherTotal: d.dispatcherTotal };
+  } catch (e) { /* 後端不在就用本機推算 */ }
+}
+
+function applyInfo() {
+  const row = (window.__UNCLAIMED__ || []).find(i => i.taskId === task.taskId);
+  const qWait = Number(qs('waited'));
+  const flow = task.criticalStation?.flowPerHour || 0;
+
+  if (row) {
+    info = { waitedMin: row.waitedMin, peak: row.peak, hot: flow >= thresholds.flowPerHourThreshold, source: 'backend' };
+  } else if (Number.isFinite(qWait) && qWait >= 0) {
+    info = { waitedMin: qWait, peak: isPeak(task.slotIndex), hot: flow >= thresholds.flowPerHourThreshold, source: 'link' };
+  } else {
+    info = { waitedMin: null, peak: isPeak(task.slotIndex), hot: flow >= thresholds.flowPerHourThreshold, source: 'local' };
+  }
+  waitBase = info.waitedMin == null ? null : Date.now() - info.waitedMin * 60000;
+}
+
+/** 與後端 isPeakSlot 相同：07:00–09:30 與 17:00–19:30 */
+function isPeak(slot) {
+  const i = ((slot % 48) + 48) % 48;
+  return (i >= 14 && i <= 18) || (i >= 34 && i <= 38);
+}
+
+function waitedNow() {
+  if (waitBase == null) return null;
+  return Math.max(0, Math.round((Date.now() - waitBase) / 60000));
+}
+function tickWait() {
+  const el = $('wait-num');
+  if (el && waitedNow() != null) el.textContent = waitedNow();
+}
+
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+const taskState = t => progress[t.taskId] || { status: 'pending', stops: {} };
+function saveState(taskId, patch) {
+  progress[taskId] = Object.assign({ status: 'pending', stops: {} }, progress[taskId], patch);
+  store.set('yb_progress', progress);
+}
+
+async function api(path, body) {
+  if (!CONFIG.apiBase) return { ok: false, offline: true };
+  try {
+    const r = await fetch(CONFIG.apiBase.replace(/\/+$/, '') + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ userId: profile.userId }, body)),
+    });
+    return { ok: r.ok, status: r.status, data: await r.json().catch(() => null) };
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+const state = (ico, title, body) => `<div class="state"><div class="ico">${ico}</div><h3>${title}</h3><p>${body}</p></div>`;
+
+/* ============================================================================
+   沒帶 taskId：列出目前無人接單的工單
+   ============================================================================ */
+function renderQueue() {
+  const items = window.__UNCLAIMED__ || [];
+  $('top-sub').textContent = '未指定工單';
+  $('actions').classList.add('hide');
+
+  if (!items.length) {
+    // 空的原因不只一種，講錯會讓人以為系統壞了
+    const q = window.__QUEUE_META__ || {};
+    const body = q.dispatcherTotal === 0
+      ? '尚無調度員加入好友，推播沒有對象，因此沒有工單進入這個佇列。'
+      : q.pushedTotal === 0
+        ? '這裡只列「已經推播出去、卻還沒人接」的工單，不是所有失衡的站。目前一筆都還沒推播。'
+        : '推播出去的都有人接走了。回到任務列表可以查看一般派工。';
+    $('content').innerHTML = state('✅', '目前沒有等待接單的工單', body)
+      + `<button class="btn btn-open" onclick="goList()">回到任務列表</button>`;
+    return;
+  }
+
+  $('content').innerHTML = `
+    <div class="sec-h">等待中的工單<span class="n">${items.length} 筆</span></div>
+    <div class="card" style="overflow:hidden">
+      ${items.map(i => `
+        <button class="qrow" onclick="location.href='urgent.html?taskId=${encodeURIComponent(i.taskId)}'">
+          <div style="min-width:0">
+            <div class="nm">${esc(i.criticalStation || i.taskId)}</div>
+            <div class="sub">${esc(i.taskId)}　${esc((i.districts || []).join('、'))}${i.stops ? ' · ' + i.stops + ' 站' : ''}</div>
+          </div>
+          <div class="w">${i.waitedMin} 分</div>
+        </button>`).join('')}
+    </div>
+    <div class="foot-note">超過 ${thresholds.unclaimedMinutes} 分鐘無人接單才會被系統升級為緊急派送。</div>`;
+}
+
+/* ============================================================================
+   主畫面
+   ============================================================================ */
+function render() {
+  const st = taskState(task).status;
+  $('top-title').textContent = '緊急派送 · ' + task.taskId;
+  $('top-sub').textContent = `${task.districts.join('、')}｜${task.slot} 時段`;
+
+  if (st === 'taken') {
+    $('content').innerHTML = state('🏃', '這筆已被其他調度員接走',
+      '不用重複出勤。回到任務列表看看還有哪些待處理。');
+    $('actions-inner').innerHTML = `<button class="btn btn-open" onclick="goList()">回到任務列表</button>`;
+    $('actions').classList.remove('hide');
+    return;
+  }
+
+  const accepted = st === 'accepted' || st === 'done';
+  $('content').innerHTML = hero() + why() + crit() + route() + ai();
+  $('foot-note').innerHTML = footNote();
+
+  $('actions-inner').innerHTML = accepted
+    ? `<button class="btn btn-open" onclick="goDetail()">開啟完整任務頁</button>
+       <button class="btn btn-ghost" onclick="goList()">回到任務列表</button>`
+    : `<button class="btn btn-accept" id="btn-accept" onclick="acceptTask()">立即接單 · 預估 ${task.etaMinutes} 分</button>
+       <button class="btn btn-ghost" onclick="declineTask()">目前無法承接</button>`;
+  $('actions').classList.remove('hide');
+}
+
+function hero() {
+  const w = waitedNow();
+  const lost = Math.round(task.estimatedLostTrips || 0);
+  return `
+    <div class="hero">
+      <div class="lbl">🚨 已推播，仍無人接單</div>
+      ${w == null
+        ? `<div class="big" style="font-size:26px">等待時間未知</div>
+           <div class="cap">後端未連線，無法取得這筆推播出去多久。下方的失衡資訊仍為實際資料。</div>`
+        : `<div class="big"><span id="wait-num">${w}</span><small>分鐘</small></div>
+           <div class="cap">這段時間裡，${esc(task.criticalStation.name)}持續有人到站${task.criticalStation.kind === 'shortage' ? '借不到車' : '還不了車'}。</div>`}
+      <div class="hero-split">
+        <div><b>${lost}</b><span>全趟已流失</span></div>
+        <div><b>${task.stops.length}</b><span>站待處理</span></div>
+        <div><b>${task.etaMinutes}</b><span>預估分鐘</span></div>
+      </div>
+    </div>`;
+}
+
+function why() {
+  const c = task.criticalStation;
+  const w = waitedNow();
+  const reasons = [];
+  if (info.peak) reasons.push('尖峰時段');
+  if (info.hot) reasons.push(`高轉換站（每小時約 ${c.flowPerHour} 次借還）`);
+
+  return `
+    <div class="why">
+      <h3>這筆為何升級為緊急</h3>
+      <p>${w == null ? '這筆推播後尚未有人接單' : `推播後 ${w} 分鐘仍無人接單`}${reasons.length ? '，且屬' + reasons.join('、') : ''}。
+      一般派工是廣播搶單，沒人接時系統必須主動把它標為不能再等。</p>
+      <div class="tags">
+        ${w != null ? `<span class="tag wait">已等 ${w} 分 / 門檻 ${thresholds.unclaimedMinutes} 分</span>` : ''}
+        ${info.peak ? '<span class="tag peak">尖峰時段</span>' : ''}
+        ${info.hot ? `<span class="tag hot">高轉換 ${c.flowPerHour} 次/小時</span>` : ''}
+      </div>
+    </div>`;
+}
+
+function crit() {
+  const c = task.criticalStation;
+  const short = c.kind === 'shortage';
+  const hrs = Math.round(c.durationMinutes / 60 * 10) / 10;
+  // 水位條：缺車看可借比例，滿站看可還比例，兩者都是「越少越糟」
+  const ratio = Math.max(0, Math.min(1, c.ratio ?? 0));
+  return `
+    <div class="sec-h">首要處理站</div>
+    <div class="card crit">
+      <div class="k">${short ? '缺車' : '滿站'}　已持續 ${hrs} 小時</div>
+      <div class="nm">${esc(c.name)}</div>
+      <div class="st" style="color:${short ? 'var(--red)' : 'var(--full)'}">
+        目前${short ? '可借' : '可還'}比例 ${(ratio * 100).toFixed(0)}%　·　每小時約 ${c.flowPerHour} 次借還
+      </div>
+      <div class="bar"><i style="width:${Math.max(3, ratio * 100).toFixed(0)}%;background:${short ? 'var(--red)' : 'var(--full)'}"></i></div>
+    </div>`;
+}
+
+function route() {
+  const cap = DATA.meta?.config?.truckCapacity || 20;
+  const rows = task.stops.map(s => {
+    const pick = s.action === 'pickup';
+    return `
+      <div class="rnode">
+        <div class="mk" style="background:${pick ? 'var(--full)' : 'var(--brand)'}">${esc(s.label)}</div>
+        <div style="min-width:0">
+          <div class="nm">${esc(s.name)}</div>
+          <div class="sub">${esc(s.district || '')}　車廂 ${s.truckLoadAfter} / ${cap}</div>
+        </div>
+        <div class="mv" style="color:${pick ? 'var(--full)' : 'var(--brand-d)'}">${pick ? '取' : '補'} ${Math.abs(s.moveBikes)}</div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="sec-h">調度路線<span class="n">${task.stops.length} 站 · ${task.distanceKm} 公里</span></div>
+    <div class="card route">
+      ${rows}
+      <div class="foot">
+        路線一律從滿站取車開始——調度車空車出發，先有車才有得補。
+        <button onclick="openNav()">開啟導航</button>
+      </div>
+    </div>`;
+}
+
+function ai() {
+  const text = task.aiExplain || task.aiExplainFallback;
+  if (!text) return '';
+  return `<div class="card ai"><h3>為什麼是這個順序</h3><p>${esc(text)}</p></div>`;
+}
+
+function footNote() {
+  const src = info.source === 'backend' ? '等待時間來自後端即時計算'
+    : info.source === 'link' ? '等待時間來自推播當下的連結參數，可能已經更久'
+    : '後端未連線，等待時間無法取得；尖峰與高轉換為本機依工單時段推算';
+  return `${esc(src)}。<br>${esc(DATA.meta?.sourceNote || '')}`;
+}
+
+/* ============================================================================
+   動作
+   ============================================================================ */
+async function acceptTask() {
+  if (busy) return;
+  busy = true;
+  const btn = $('btn-accept');
+  if (btn) { btn.disabled = true; btn.textContent = '接單中…'; }
+
+  const r = await api('/tasks/accept', { taskId: task.taskId });
+
+  // 搶單失敗：別人先接走了。必須擋下來，否則兩個人會跑同一條路線。
+  if (r.status === 409) {
+    saveState(task.taskId, { status: 'taken' });
+    busy = false;
+    toast('這筆已被其他調度員接走');
+    render();
+    return;
+  }
+
+  saveState(task.taskId, { status: 'accepted', acceptedAt: Date.now() });
+  if (inClient && window.liff && liff.sendMessages) {
+    try {
+      await liff.sendMessages([{ type: 'text', text: `🚨 已接下緊急派送 ${task.taskId}｜${task.districts.join('、')} ${task.stops.length} 站，預估 ${task.etaMinutes} 分鐘` }]);
+    } catch {}
+  }
+  busy = false;
+  toast('已接單，正在開啟任務頁');
+  render();
+  setTimeout(goDetail, 900);
+}
+
+async function declineTask() {
+  if (busy) return;
+  busy = true;
+  saveState(task.taskId, { status: 'pending', declined: true });
+  await api('/tasks/decline', { taskId: task.taskId });
+  if (inClient && window.liff && liff.sendMessages) {
+    try { await liff.sendMessages([{ type: 'text', text: `❌ 目前無法承接緊急派送 ${task.taskId}，請改派其他調度員` }]); } catch {}
+  }
+  busy = false;
+  toast('已回覆調度中心，將改派其他人');
+  setTimeout(() => { if (inClient && window.liff && liff.closeWindow) liff.closeWindow(); else goList(); }, 900);
+}
+
+function openNav() {
+  const pts = task.stops.map(s => `${s.lat},${s.lng}`);
+  const dest = pts.pop();
+  const wp = pts.length ? `&waypoints=${pts.join('|')}` : '';
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}${wp}&travelmode=driving`;
+  if (inClient && window.liff && liff.openWindow) liff.openWindow({ url, external: true });
+  else window.open(url, '_blank', 'noopener');
+}
+
+function goDetail() { location.href = 'index.html?taskId=' + encodeURIComponent(task.taskId); }
+function goList() { location.href = 'index.html'; }
+</script>
+</body>
+</html>
